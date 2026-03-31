@@ -1,11 +1,11 @@
-# giltiq-mcp
+# @giltiq/mcp
 
 MCP server for EU VAT validation with **multi-source reliability** (VIES + Germany's BZSt), automatic failover, and legally binding **qualified confirmations per §18e UStG**. Works when VIES is down. No other MCP server provides this.
 
 ## Install
 
 ```bash
-npx giltiq-mcp
+npx @giltiq/mcp
 ```
 
 ## Configure
@@ -19,7 +19,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
   "mcpServers": {
     "giltiq": {
       "command": "npx",
-      "args": ["-y", "giltiq-mcp"],
+      "args": ["-y", "@giltiq/mcp"],
       "env": {
         "GILTIQ_API_KEY": "gq_live_your_key_here"
       }
@@ -37,7 +37,7 @@ Add to `.cursor/mcp.json`:
   "mcpServers": {
     "giltiq": {
       "command": "npx",
-      "args": ["-y", "giltiq-mcp"],
+      "args": ["-y", "@giltiq/mcp"],
       "env": {
         "GILTIQ_API_KEY": "gq_live_your_key_here"
       }
@@ -55,7 +55,7 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
   "mcpServers": {
     "giltiq": {
       "command": "npx",
-      "args": ["-y", "giltiq-mcp"],
+      "args": ["-y", "@giltiq/mcp"],
       "env": {
         "GILTIQ_API_KEY": "gq_live_your_key_here"
       }
