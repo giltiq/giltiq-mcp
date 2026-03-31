@@ -1,0 +1,60 @@
+{
+	"name": "giltiq-mcp",
+	"version": "0.1.0",
+	"description": "MCP server for EU VAT validation — VIES + BZSt failover, §18e qualified confirmations, cached fallback. Works when VIES is down.",
+	"type": "module",
+	"main": "dist/index.js",
+	"bin": {
+		"giltiq-mcp": "dist/index.js"
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsx src/index.ts",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"lint": "biome check --write .",
+		"lint:check": "biome check .",
+		"prepublishOnly": "npm run build"
+	},
+	"keywords": [
+		"mcp",
+		"vat",
+		"vies",
+		"bzst",
+		"tax",
+		"validation",
+		"eu",
+		"germany",
+		"ustg",
+		"18e",
+		"qualified-confirmation",
+		"model-context-protocol"
+	],
+	"author": "Giltiq <support@giltiq.de>",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/giltiq/giltiq-mcp.git"
+	},
+	"bugs": {
+		"url": "https://github.com/giltiq/giltiq-mcp/issues"
+	},
+	"homepage": "https://giltiq.de",
+	"engines": {
+		"node": ">=18.0.0"
+	},
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.29.0",
+		"zod": "^4.3.6"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.4.10",
+		"@types/node": "^25.5.0",
+		"tsx": "^4.21.0",
+		"typescript": "^6.0.2",
+		"vitest": "^4.1.2"
+	}
+}
