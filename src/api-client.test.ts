@@ -219,7 +219,7 @@ describe("GiltiqApiClient", () => {
 	});
 
 	describe("qualifiedConfirmation", () => {
-		it("calls validate with requester params and returns slimmed response", async () => {
+		it("calls validate with company params and returns canonical response shape", async () => {
 			fetchMock.mockResolvedValueOnce({
 				ok: true,
 				status: 200,
@@ -234,10 +234,12 @@ describe("GiltiqApiClient", () => {
 					source_timestamp: "2026-03-25T10:00:00.000Z",
 					cache: false,
 					qualified_confirmation: {
-						name_match: "A",
-						city_match: "A",
-						zip_match: "A",
-						confirmation_number: "DE20260325123456",
+						name_match: "match",
+						street_match: "not_queried",
+						city_match: "match",
+						zip_match: "match",
+						receipt_id: "GQ-QC-20260325-A7K2M9P4R3",
+						issued_at: "2026-03-25T10:00:00.000Z",
 					},
 					request_id: "req_02",
 					requested_at: "2026-03-25T10:00:00.000Z",
@@ -264,12 +266,202 @@ describe("GiltiqApiClient", () => {
 				source_timestamp: "2026-03-25T10:00:00.000Z",
 				cache: false,
 				qualified_confirmation: {
-					name_match: "A",
-					city_match: "A",
-					zip_match: "A",
-					confirmation_number: "DE20260325123456",
+					name_match: "match",
+					street_match: "not_queried",
+					city_match: "match",
+					zip_match: "match",
+					receipt_id: "GQ-QC-20260325-A7K2M9P4R3",
+					issued_at: "2026-03-25T10:00:00.000Z",
 				},
 			});
+			// canonical shape: no confirmation_number
+			const qc = (result as { qualified_confirmation: Record<string, unknown> })
+				.qualified_confirmation;
+			expect(qc).not.toHaveProperty("confirmation_number");
+		});
+
+		it("sends company_street when provided", async () => {
+			fetchMock.mockResolvedValueOnce({
+				ok: true,
+				status: 200,
+				json: async () => ({
+					valid: true,
+					vat_id: "DE811575812",
+					company_name: "BZSt",
+					company_address: "An der Küppe 1, 53225 Bonn",
+					source: "bzst",
+					source_timestamp: "2026-03-25T10:00:00.000Z",
+					cache: false,
+					qualified_confirmation: {
+						name_match: "match",
+						street_match: "match",
+						city_match: "match",
+						zip_match: "match",
+						receipt_id: "GQ-QC-20260325-B9X1Z7Q2W5",
+						issued_at: "2026-03-25T10:00:00.000Z",
+					},
+				}),
+			});
+
+			await client.qualifiedConfirmation("DE811575812", {
+				companyStreet: "An der Küppe 1",
+			});
+
+			const calledUrl = fetchMock.mock.calls[0][0] as string;
+			expect(calledUrl).toContain("company_street=");
+		});
+
+		it("returns API error on failure", async () => {
+			fetchMock.mockResolvedValueOnce({
+				ok: false,
+				status: 403,
+				json: async () => ({
+					error: "plan_upgrade_required",
+					message: "Qualified confirmation requires a paid plan.",
+					upgrade_url: "https://giltiq.de/upgrade",
+				}),
+			});
+
+			const result = await client.qualifiedConfirmation("DE811575812");
+			expect(result).toHaveProperty("error", "plan_upgrade_required");
+		});
+	});
+
+	describe("getQualifiedConfirmation", () => {
+		it("calls GET /v1/qualified-confirmations/{receiptId} and returns stored receipt", async () => {
+			const receipt = {
+				receipt_id: "GQ-QC-20260325-A7K2M9P4R3",
+				issued_at: "2026-03-25T10:00:00.000Z",
+				vat_id: "DE811575812",
+				company_name: "Bundeszentralamt für Steuern",
+				company_street: null,
+				company_zip: "53225",
+				company_city: "Bonn",
+				name_match: "match",
+				street_match: "not_queried",
+				zip_match: "match",
+				city_match: "match",
+				official_name: "Bundeszentralamt für Steuern",
+				official_address: "An der Küppe 1, 53225 Bonn",
+			};
+
+			fetchMock.mockResolvedValueOnce({
+				ok: true,
+				status: 200,
+				json: async () => receipt,
+			});
+
+			const result = await client.getQualifiedConfirmation(
+				"GQ-QC-20260325-A7K2M9P4R3",
+			);
+
+			expect(fetchMock).toHaveBeenCalledWith(
+				`${BASE_URL}/v1/qualified-confirmations/GQ-QC-20260325-A7K2M9P4R3`,
+				expect.objectContaining({
+					headers: expect.objectContaining({ "X-Api-Key": "gq_live_test123" }),
+				}),
+			);
+			expect(result).toEqual(receipt);
+		});
+
+		it("returns error on 404 (receipt not found)", async () => {
+			fetchMock.mockResolvedValueOnce({
+				ok: false,
+				status: 404,
+				json: async () => ({
+					error: "not_found",
+					message: "Receipt not found.",
+				}),
+			});
+
+			const result = await client.getQualifiedConfirmation("GQ-QC-INVALID");
+			expect(result).toHaveProperty("error", "not_found");
+		});
+
+		it("returns error on network failure", async () => {
+			fetchMock.mockRejectedValueOnce(new Error("Connection refused"));
+
+			const result = await client.getQualifiedConfirmation(
+				"GQ-QC-20260325-A7K2M9P4R3",
+			);
+			expect(result).toEqual({
+				error: "network_error",
+				message: "Connection refused",
+			});
+		});
+	});
+
+	describe("listQualifiedConfirmations", () => {
+		it("calls GET /v1/qualified-confirmations and returns paginated list", async () => {
+			const listResponse = {
+				items: [
+					{
+						receipt_id: "GQ-QC-20260325-A7K2M9P4R3",
+						issued_at: "2026-03-25T10:00:00.000Z",
+						vat_id: "DE811575812",
+						company_name: "BZSt",
+						company_street: null,
+						company_zip: "53225",
+						company_city: "Bonn",
+						name_match: "match",
+						street_match: "not_queried",
+						zip_match: "match",
+						city_match: "match",
+						official_name: "Bundeszentralamt für Steuern",
+						official_address: "An der Küppe 1, 53225 Bonn",
+					},
+				],
+				next_cursor: null,
+			};
+
+			fetchMock.mockResolvedValueOnce({
+				ok: true,
+				status: 200,
+				json: async () => listResponse,
+			});
+
+			const result = await client.listQualifiedConfirmations();
+
+			expect(fetchMock).toHaveBeenCalledWith(
+				`${BASE_URL}/v1/qualified-confirmations`,
+				expect.objectContaining({
+					headers: expect.objectContaining({ "X-Api-Key": "gq_live_test123" }),
+				}),
+			);
+			expect(result).toEqual(listResponse);
+		});
+
+		it("passes target_vat_id, limit, and cursor filters", async () => {
+			fetchMock.mockResolvedValueOnce({
+				ok: true,
+				status: 200,
+				json: async () => ({ items: [], next_cursor: null }),
+			});
+
+			await client.listQualifiedConfirmations({
+				targetVatId: "DE811575812",
+				limit: 10,
+				cursor: "abc123",
+			});
+
+			const calledUrl = fetchMock.mock.calls[0][0] as string;
+			expect(calledUrl).toContain("target_vat_id=DE811575812");
+			expect(calledUrl).toContain("limit=10");
+			expect(calledUrl).toContain("cursor=abc123");
+		});
+
+		it("returns error on 401", async () => {
+			fetchMock.mockResolvedValueOnce({
+				ok: false,
+				status: 401,
+				json: async () => ({
+					error: "unauthorized",
+					message: "API key required.",
+				}),
+			});
+
+			const result = await client.listQualifiedConfirmations();
+			expect(result).toHaveProperty("error", "unauthorized");
 		});
 	});
 

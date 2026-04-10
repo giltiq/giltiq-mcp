@@ -36,6 +36,8 @@ export function createGiltiqServer(options: CreateServerOptions = {}) {
 		if (authToolsEnabled) return;
 		authToolsEnabled = true;
 		qualifiedTool.enable();
+		getConfirmationTool.enable();
+		listConfirmationsTool.enable();
 		usageTool.enable();
 		try {
 			mcpServer.sendToolListChanged();
@@ -94,7 +96,7 @@ export function createGiltiqServer(options: CreateServerOptions = {}) {
 		"qualified_confirmation",
 		{
 			description:
-				"Request a legally binding BZSt qualified confirmation per §18e UStG — required for audit-proof cross-border VAT exemption in Germany. Returns official confirmation with requestor/target company match details. No other MCP server provides this. Audit-proof document generation (PDF) coming soon.",
+				"Request a legally binding BZSt qualified confirmation per §18e UStG — required for audit-proof cross-border VAT exemption in Germany. Returns official confirmation with company match details and a receipt_id you can use with get_qualified_confirmation to retrieve this record later for audit purposes. No other MCP server provides this.",
 			inputSchema: {
 				vat_id: z
 					.string()
@@ -105,6 +107,10 @@ export function createGiltiqServer(options: CreateServerOptions = {}) {
 					.string()
 					.optional()
 					.describe("Company name to match against BZSt registry"),
+				company_street: z
+					.string()
+					.optional()
+					.describe("Company street address to match"),
 				company_city: z.string().optional().describe("Company city to match"),
 				company_zip: z
 					.string()
@@ -112,11 +118,77 @@ export function createGiltiqServer(options: CreateServerOptions = {}) {
 					.describe("Company postal code to match"),
 			},
 		},
-		async ({ vat_id, company_name, company_city, company_zip }) => {
+		async ({
+			vat_id,
+			company_name,
+			company_street,
+			company_city,
+			company_zip,
+		}) => {
 			const result = await client.qualifiedConfirmation(vat_id, {
 				companyName: company_name,
+				companyStreet: company_street,
 				companyCity: company_city,
 				companyZip: company_zip,
+			});
+
+			if (isApiError(result)) {
+				return errorResult(result);
+			}
+
+			return successResult(result);
+		},
+	);
+
+	// --- Tool: get_qualified_confirmation (auth-only, may be lazy) ---
+	const getConfirmationTool = mcpServer.registerTool(
+		"get_qualified_confirmation",
+		{
+			description:
+				"Retrieve a past qualified confirmation by receipt id. Use this for §18e UStG audit evidence — fetch a receipt Giltiq issued in a prior validation call.",
+			inputSchema: {
+				receipt_id: z
+					.string()
+					.describe("Giltiq receipt id (e.g. GQ-QC-20260410-A7K2M9P4R3)"),
+			},
+		},
+		async ({ receipt_id }) => {
+			const result = await client.getQualifiedConfirmation(receipt_id);
+
+			if (isApiError(result)) {
+				return errorResult(result);
+			}
+
+			return successResult(result);
+		},
+	);
+
+	// --- Tool: list_qualified_confirmations (auth-only, may be lazy) ---
+	const listConfirmationsTool = mcpServer.registerTool(
+		"list_qualified_confirmations",
+		{
+			description:
+				"List qualified confirmation receipts you've issued, newest first. Filter by target_vat_id to find past audits of a specific customer.",
+			inputSchema: {
+				target_vat_id: z
+					.string()
+					.optional()
+					.describe("Filter receipts by target VAT ID"),
+				limit: z
+					.number()
+					.optional()
+					.describe("Maximum number of results to return"),
+				cursor: z
+					.string()
+					.optional()
+					.describe("Pagination cursor from a previous list call"),
+			},
+		},
+		async ({ target_vat_id, limit, cursor }) => {
+			const result = await client.listQualifiedConfirmations({
+				targetVatId: target_vat_id,
+				limit,
+				cursor,
 			});
 
 			if (isApiError(result)) {
@@ -148,6 +220,8 @@ export function createGiltiqServer(options: CreateServerOptions = {}) {
 	// Disable auth-only tools if not authenticated or lazy
 	if (!authToolsEnabled) {
 		qualifiedTool.disable();
+		getConfirmationTool.disable();
+		listConfirmationsTool.disable();
 		usageTool.disable();
 	}
 

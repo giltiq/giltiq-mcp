@@ -16,6 +16,25 @@ export interface QualifiedOptions {
 	companyName?: string;
 	companyCity?: string;
 	companyZip?: string;
+	companyStreet?: string;
+}
+
+type MatchResult = "match" | "mismatch" | "not_queried" | "not_provided";
+
+export interface StoredReceipt {
+	receipt_id: string;
+	issued_at: string;
+	vat_id: string;
+	company_name: string | null;
+	company_street: string | null;
+	company_zip: string | null;
+	company_city: string | null;
+	name_match: MatchResult;
+	street_match: MatchResult;
+	zip_match: MatchResult;
+	city_match: MatchResult;
+	official_name: string | null;
+	official_address: string | null;
 }
 
 export interface SlimValidationResult {
@@ -27,10 +46,12 @@ export interface SlimValidationResult {
 	source_timestamp: string | null;
 	cache: boolean;
 	qualified_confirmation: {
-		name_match: string;
-		city_match: string;
-		zip_match: string;
-		confirmation_number: string | null;
+		name_match: MatchResult;
+		street_match: MatchResult;
+		zip_match: MatchResult;
+		city_match: MatchResult;
+		receipt_id: string;
+		issued_at: string;
 	} | null;
 }
 
@@ -99,17 +120,11 @@ export class GiltiqApiClient {
 	): Promise<SlimValidationResult | ApiError> {
 		try {
 			const params = new URLSearchParams();
-			// Use the client's own API key as requester_vat_id is separate,
-			// but the API expects it as a query param for qualified confirmation.
-			// The VAT ID of the requester should be the client's own VAT ID,
-			// but since we don't have it, we pass the target as requester too
-			// (the API's qualified confirmation needs requester_vat_id).
-			// Actually, looking at the API: requester_vat_id is the caller's own VAT ID.
-			// For the MCP tool, we don't expose requester_vat_id — the API uses the
-			// BZST_OWN_VAT_ID from server config as the requester.
 			if (options?.companyName) params.set("company_name", options.companyName);
 			if (options?.companyCity) params.set("company_city", options.companyCity);
 			if (options?.companyZip) params.set("company_zip", options.companyZip);
+			if (options?.companyStreet)
+				params.set("company_street", options.companyStreet);
 
 			const qs = params.toString();
 			const url = `${this.baseUrl}/v1/validate/${encodeURIComponent(vatId)}${qs ? `?${qs}` : ""}`;
@@ -125,6 +140,66 @@ export class GiltiqApiClient {
 			}
 
 			return slimValidationResponse(data);
+		} catch (err) {
+			return {
+				error: "network_error",
+				message: err instanceof Error ? err.message : String(err),
+			};
+		}
+	}
+
+	async getQualifiedConfirmation(
+		receiptId: string,
+	): Promise<StoredReceipt | ApiError> {
+		try {
+			const url = `${this.baseUrl}/v1/qualified-confirmations/${encodeURIComponent(receiptId)}`;
+
+			const res = await this.fetchFn(url, {
+				headers: this.authHeaders(),
+			});
+
+			const data = await res.json();
+
+			if (!res.ok) {
+				return data as ApiError;
+			}
+
+			return data as StoredReceipt;
+		} catch (err) {
+			return {
+				error: "network_error",
+				message: err instanceof Error ? err.message : String(err),
+			};
+		}
+	}
+
+	async listQualifiedConfirmations(opts?: {
+		targetVatId?: string;
+		limit?: number;
+		cursor?: string;
+	}): Promise<
+		{ items: StoredReceipt[]; next_cursor: string | null } | ApiError
+	> {
+		try {
+			const params = new URLSearchParams();
+			if (opts?.targetVatId) params.set("target_vat_id", opts.targetVatId);
+			if (opts?.limit !== undefined) params.set("limit", String(opts.limit));
+			if (opts?.cursor) params.set("cursor", opts.cursor);
+
+			const qs = params.toString();
+			const url = `${this.baseUrl}/v1/qualified-confirmations${qs ? `?${qs}` : ""}`;
+
+			const res = await this.fetchFn(url, {
+				headers: this.authHeaders(),
+			});
+
+			const data = await res.json();
+
+			if (!res.ok) {
+				return data as ApiError;
+			}
+
+			return data as { items: StoredReceipt[]; next_cursor: string | null };
 		} catch (err) {
 			return {
 				error: "network_error",

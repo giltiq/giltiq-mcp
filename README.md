@@ -71,7 +71,9 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 | Tool | Description |
 |------|-------------|
 | `validate_vat_id` | Validate an EU VAT ID against VIES + BZSt with automatic failover and cached fallback. Returns company data and source freshness. |
-| `qualified_confirmation` | Request a legally binding BZSt qualified confirmation per §18e UStG for audit-proof cross-border VAT exemption in Germany. |
+| `qualified_confirmation` | Request a legally binding BZSt qualified confirmation per §18e UStG for audit-proof cross-border VAT exemption. Returns match results and a `receipt_id` for audit retrieval. |
+| `get_qualified_confirmation` | Retrieve a past qualified confirmation receipt by `receipt_id`. Use for §18e UStG audit evidence. |
+| `list_qualified_confirmations` | List qualified confirmation receipts you've issued, newest first. Filter by `target_vat_id` to find past audits of a specific customer. |
 | `check_api_status` | Check real-time availability and latency of VIES and BZSt upstream sources. |
 | `get_usage` | Get current API usage: calls used, monthly limit, tier, and reset date. |
 
@@ -85,7 +87,7 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 ## Links
 
 - [API Documentation](https://giltiq.de/en/api-reference/overview/)
-- [agents.json](https://giltiq.de/agents.json)
+- [agents.json](https://giltiq.de/.well-known/agents.json)
 - [llms.txt](https://giltiq.de/llms.txt)
 - [OpenAPI Spec](https://giltiq.de/openapi.json)
 
