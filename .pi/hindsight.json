@@ -1,0 +1,6 @@
+{
+  "banks": {
+    "project": { "bankId": "giltiq" },
+    "user": { "enabled": true, "bankId": "coding" }
+  }
+}
