@@ -71,8 +71,8 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 | Tool | Description |
 |------|-------------|
 | `validate_vat_id` | Validate an EU VAT ID against VIES + BZSt with automatic failover and cached fallback. Returns company data and source freshness. |
-| `qualified_confirmation` | Request a legally binding BZSt qualified confirmation per §18e UStG for audit-proof cross-border VAT exemption. Returns match results and a `receipt_id` for audit retrieval. Included from the Starter plan: 100 per calendar month on Starter, 1,000 on Business (402 `QUALIFIED_QUOTA_EXCEEDED` with `limit`/`used` once spent). |
-| `get_qualified_confirmation` | Retrieve a past qualified confirmation receipt by `receipt_id`. Use for §18e UStG audit evidence. |
+| `qualified_confirmation` | Request a legally binding BZSt qualified confirmation per §18e UStG for audit-proof cross-border VAT exemption. Requires `requester_vat_id` (your own German VAT ID, DE + 9 digits; otherwise 400 `INVALID_REQUESTER_VAT_ID`). Returns match results and a `receipt_id` for audit retrieval. Included from the Starter plan: 100 per calendar month on Starter, 1,000 on Business (402 `QUALIFIED_QUOTA_EXCEEDED` with `limit`/`used` once spent). |
+| `get_qualified_confirmation` | Retrieve a past qualified confirmation receipt by `receipt_id`. Use for §18e UStG audit evidence. Receipts belong to your account, so they survive API key rotation and plan downgrades. |
 | `list_qualified_confirmations` | List qualified confirmation receipts you've issued, newest first. Filter by `target_vat_id` to find past audits of a specific customer. |
 | `check_api_status` | Check real-time availability and latency of VIES and BZSt upstream sources. |
 | `get_usage` | Get current API usage: calls used, monthly limit, tier, and reset date. |

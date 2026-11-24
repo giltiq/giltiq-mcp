@@ -206,7 +206,9 @@ describe("GiltiqApiClient", () => {
 				json: async () => ({ error }),
 			});
 
-			const result = await client.qualifiedConfirmation("DE811575812");
+			const result = await client.qualifiedConfirmation("DE811575812", {
+				requesterVatId: "DE123456789",
+			});
 			expect(result).toEqual({ error });
 		});
 
@@ -266,12 +268,14 @@ describe("GiltiqApiClient", () => {
 			});
 
 			const result = await client.qualifiedConfirmation("DE811575812", {
+				requesterVatId: "DE123456789",
 				companyName: "Bundeszentralamt für Steuern",
 				companyCity: "Bonn",
 				companyZip: "53225",
 			});
 
 			const calledUrl = fetchMock.mock.calls[0][0] as string;
+			expect(calledUrl).toContain("requester_vat_id=DE123456789");
 			expect(calledUrl).toContain("company_name=Bundeszentralamt");
 			expect(calledUrl).toContain("company_city=Bonn");
 			expect(calledUrl).toContain("company_zip=53225");
@@ -341,7 +345,9 @@ describe("GiltiqApiClient", () => {
 				}),
 			});
 
-			const result = await client.qualifiedConfirmation("DE811575812");
+			const result = await client.qualifiedConfirmation("DE811575812", {
+				requesterVatId: "DE123456789",
+			});
 			expect(result).toHaveProperty("error", "plan_upgrade_required");
 		});
 	});
