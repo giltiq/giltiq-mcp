@@ -96,7 +96,7 @@ export function createGiltiqServer(options: CreateServerOptions = {}) {
 		"qualified_confirmation",
 		{
 			description:
-				"Request a legally binding BZSt qualified confirmation per §18e UStG — required for audit-proof cross-border VAT exemption in Germany. Returns official confirmation with company match details and a receipt_id you can use with get_qualified_confirmation to retrieve this record later for audit purposes. No other MCP server provides this.",
+				"Request a legally binding BZSt qualified confirmation per §18e UStG — required for audit-proof cross-border VAT exemption in Germany. Returns official confirmation with company match details and a receipt_id you can use with get_qualified_confirmation to retrieve this record later for audit purposes. Included from the Starter plan: 100 per calendar month on Starter, 1,000 on Business; the API returns 402 QUALIFIED_QUOTA_EXCEEDED (with limit and used) once the allowance is spent, and 402 PLAN_REQUIRED on the free plan. No other MCP server provides this.",
 			inputSchema: {
 				vat_id: z
 					.string()
