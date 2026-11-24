@@ -96,12 +96,17 @@ export function createGiltiqServer(options: CreateServerOptions = {}) {
 		"qualified_confirmation",
 		{
 			description:
-				"Request a legally binding BZSt qualified confirmation per §18e UStG — required for audit-proof cross-border VAT exemption in Germany. Returns official confirmation with company match details and a receipt_id you can use with get_qualified_confirmation to retrieve this record later for audit purposes. Included from the Starter plan: 100 per calendar month on Starter, 1,000 on Business; the API returns 402 QUALIFIED_QUOTA_EXCEEDED (with limit and used) once the allowance is spent, and 402 PLAN_REQUIRED on the free plan. No other MCP server provides this.",
+				"Request a legally binding BZSt qualified confirmation per §18e UStG — required for audit-proof cross-border VAT exemption in Germany. Returns official confirmation with company match details and a receipt_id you can use with get_qualified_confirmation to retrieve this record later for audit purposes. Included from the Starter plan: 100 per calendar month on Starter, 1,000 on Business; the API returns 402 QUALIFIED_QUOTA_EXCEEDED (with limit and used) once the allowance is spent, and 402 PLAN_REQUIRED on the free plan. Requires requester_vat_id: your own German VAT ID (DE + 9 digits); a missing or non-German value returns 400 INVALID_REQUESTER_VAT_ID before BZSt is called. The receipt belongs to the account, not the API key. No other MCP server provides this.",
 			inputSchema: {
 				vat_id: z
 					.string()
 					.describe(
 						"EU VAT ID to check (must be DE prefix for qualified confirmation)",
+					),
+				requester_vat_id: z
+					.string()
+					.describe(
+						"Your own German VAT ID (DE + 9 digits), sent to BZSt as the requesting party. Required.",
 					),
 				company_name: z
 					.string()
@@ -120,12 +125,14 @@ export function createGiltiqServer(options: CreateServerOptions = {}) {
 		},
 		async ({
 			vat_id,
+			requester_vat_id,
 			company_name,
 			company_street,
 			company_city,
 			company_zip,
 		}) => {
 			const result = await client.qualifiedConfirmation(vat_id, {
+				requesterVatId: requester_vat_id,
 				companyName: company_name,
 				companyStreet: company_street,
 				companyCity: company_city,
@@ -145,7 +152,7 @@ export function createGiltiqServer(options: CreateServerOptions = {}) {
 		"get_qualified_confirmation",
 		{
 			description:
-				"Retrieve a past qualified confirmation by receipt id. Use this for §18e UStG audit evidence — fetch a receipt Giltiq issued in a prior validation call.",
+				"Retrieve a past qualified confirmation by receipt id (receipts are account-owned and survive key rotation). Use this for §18e UStG audit evidence — fetch a receipt Giltiq issued in a prior validation call.",
 			inputSchema: {
 				receipt_id: z
 					.string()

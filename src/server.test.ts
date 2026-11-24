@@ -237,6 +237,7 @@ describe("createGiltiqServer", () => {
 
 			const result = await callTool("qualified_confirmation", {
 				vat_id: "DE811575812",
+				requester_vat_id: "DE123456789",
 				company_name: "BZSt",
 				company_city: "Bonn",
 				company_zip: "53225",
@@ -270,6 +271,7 @@ describe("createGiltiqServer", () => {
 
 			await callTool("qualified_confirmation", {
 				vat_id: "DE811575812",
+				requester_vat_id: "DE123456789",
 				company_street: "An der Küppe 1",
 			});
 
@@ -295,6 +297,7 @@ describe("createGiltiqServer", () => {
 
 			const result = await callTool("qualified_confirmation", {
 				vat_id: "DE811575812",
+				requester_vat_id: "DE123456789",
 			});
 
 			expect(result.isError).toBe(true);

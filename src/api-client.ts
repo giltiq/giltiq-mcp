@@ -13,6 +13,8 @@ export interface ValidateOptions {
 }
 
 export interface QualifiedOptions {
+	/** Your own German VAT ID (DE + 9 digits); sent to BZSt as the requester. Required. */
+	requesterVatId: string;
 	companyName?: string;
 	companyCity?: string;
 	companyZip?: string;
@@ -126,10 +128,11 @@ export class GiltiqApiClient {
 
 	async qualifiedConfirmation(
 		vatId: string,
-		options?: QualifiedOptions,
+		options: QualifiedOptions,
 	): Promise<SlimValidationResult | ApiError> {
 		try {
 			const params = new URLSearchParams();
+			params.set("requester_vat_id", options.requesterVatId);
 			if (options?.companyName) params.set("company_name", options.companyName);
 			if (options?.companyCity) params.set("company_city", options.companyCity);
 			if (options?.companyZip) params.set("company_zip", options.companyZip);
