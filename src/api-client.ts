@@ -56,7 +56,17 @@ export interface SlimValidationResult {
 }
 
 export interface ApiError {
-	error: string | { code: string; message: string };
+	error:
+		| string
+		| {
+				code: string;
+				message: string;
+				/** QUALIFIED_QUOTA_EXCEEDED: monthly allowance (Starter 100, Business 1,000). */
+				limit?: number;
+				/** QUALIFIED_QUOTA_EXCEEDED: confirmations used this calendar month. */
+				used?: number;
+				upgrade_url?: string;
+		  };
 	message?: string;
 	register_url?: string;
 	upgrade_url?: string;

@@ -191,6 +191,25 @@ describe("GiltiqApiClient", () => {
 			});
 		});
 
+		it("passes through QUALIFIED_QUOTA_EXCEEDED with limit and used", async () => {
+			const error = {
+				code: "QUALIFIED_QUOTA_EXCEEDED",
+				message:
+					"Monthly qualified confirmation allowance of 100 reached for the starter plan.",
+				limit: 100,
+				used: 100,
+				upgrade_url: "https://giltiq.de/pricing/",
+			};
+			fetchMock.mockResolvedValueOnce({
+				ok: false,
+				status: 402,
+				json: async () => ({ error }),
+			});
+
+			const result = await client.qualifiedConfirmation("DE811575812");
+			expect(result).toEqual({ error });
+		});
+
 		it("returns error structure on 400 (invalid VAT ID)", async () => {
 			fetchMock.mockResolvedValueOnce({
 				ok: false,
