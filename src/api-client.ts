@@ -224,7 +224,7 @@ export class GiltiqApiClient {
 	async checkStatus(): Promise<string> {
 		try {
 			const res = await this.fetchFn(`${this.baseUrl}/v1/status`, {
-				headers: { "User-Agent": "giltiq-mcp/0.2.0" },
+				headers: { "User-Agent": "giltiq-mcp/0.3.0" },
 			});
 			const data = await res.json();
 
@@ -269,7 +269,7 @@ export class GiltiqApiClient {
 
 	private authHeaders(): Record<string, string> {
 		const headers: Record<string, string> = {
-			"User-Agent": "giltiq-mcp/0.2.0",
+			"User-Agent": "giltiq-mcp/0.3.0",
 		};
 		if (this.apiKey) {
 			headers["X-Api-Key"] = this.apiKey;
