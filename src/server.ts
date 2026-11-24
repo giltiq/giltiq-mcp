@@ -21,7 +21,7 @@ export function createGiltiqServer(options: CreateServerOptions = {}) {
 	});
 
 	const mcpServer = new McpServer(
-		{ name: "giltiq-mcp", version: "0.1.0" },
+		{ name: "giltiq-mcp", version: "0.2.0" },
 		{
 			capabilities: { tools: { listChanged: true } },
 			instructions:
