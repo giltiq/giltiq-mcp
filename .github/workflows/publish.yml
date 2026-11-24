@@ -1,0 +1,29 @@
+name: Publish to npm
+
+# Publishes via npm trusted publishing (OIDC). No NPM_TOKEN secret is used.
+# Registry-side config must match this repo + this exact filename (publish.yml).
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      # Node 24 ships npm >= 11.5.1, which trusted publishing requires.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+      - run: npm publish --provenance --access public
