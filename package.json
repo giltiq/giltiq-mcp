@@ -1,6 +1,6 @@
 {
 	"name": "@giltiq/mcp",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"description": "MCP server for EU VAT validation — VIES + BZSt failover, §18e qualified confirmations, cached fallback. Works when VIES is down.",
 	"type": "module",
 	"main": "dist/index.js",
